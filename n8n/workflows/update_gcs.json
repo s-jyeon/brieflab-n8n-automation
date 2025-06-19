@@ -1,0 +1,149 @@
+{
+  "name": "Brieflab",
+  "nodes": [
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://brief-lab-api:8000/build-vectordb  ",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        100,
+        0
+      ],
+      "id": "0905fee3-13bb-4d49-b7d1-0533d9144668",
+      "name": "데이터 수집, db update 완료"
+    },
+    {
+      "parameters": {
+        "jsCode": "// const moment = require('moment');\n\n// // 예시: current_time, news_count, oldest_date, newest_date 정의\n// const current_time = moment().format('YYYYMMDD_HHmm'); // 현재 시간\n// const news_count = 120; // 예시 뉴스 수\n// const oldest_date = moment().format('YYYYMMDD'); // 예시: 가장 오래된 날짜\n// const newest_date = moment().add(1, 'days').format('YYYYMMDD'); // 예시: 가장 최신 날짜 (하루 뒤)\n\n// 날짜별 폴더 이름 생성\nconst folder_name = $input.first().json.version\n\n// 파일 경로 생성\nconst index_file = `${folder_name}/index.faiss`;\nconst pkl_file = `${folder_name}/index.pkl`;\nconst metadata_file = `${folder_name}/metadata.json`;\n\nreturn [{\n  json: {\n    folder_name: folder_name,   // 날짜별 폴더 이름\n    index_file: index_file,     // index.faiss 파일 경로\n    pkl_file: pkl_file,         // index.pkl 파일 경로\n    metadata_file: metadata_file, // metadata.json 파일 경로\n    content_type: \"application/octet-stream\" // 기본적인 파일 타입 설정\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        320,
+        0
+      ],
+      "id": "e3bf6f66-0fa3-465d-8373-e4c2ae2e35b6",
+      "name": "formatting"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 6
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -140,
+        -180
+      ],
+      "id": "8d0c452a-10e0-4621-a93f-2086f88860d2",
+      "name": "daily trigger"
+    },
+    {
+      "parameters": {
+        "resource": "object",
+        "operation": "create",
+        "bucketName": "brieflab-vectordb",
+        "objectName": "={{ $json.index_file }}, {{ $json.pkl_file }},{{ $json.metadata_file }},{{ $json.metadata_file }}",
+        "createFromBinary": false,
+        "createData": {},
+        "createQuery": {},
+        "encryptionHeaders": {},
+        "requestOptions": {}
+      },
+      "type": "n8n-nodes-base.googleCloudStorage",
+      "typeVersion": 1,
+      "position": [
+        540,
+        0
+      ],
+      "id": "3a751c03-65c2-4548-9ef7-bad655921f8e",
+      "name": "update gcs",
+      "credentials": {
+        "googleCloudStorageOAuth2Api": {
+          "id": "zVEUFVjrUkr6OCmX",
+          "name": "Google Cloud Storage account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -140,
+        0
+      ],
+      "id": "e30180b3-6cf0-4439-890e-b6c4a5f8bc74",
+      "name": "trigger"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "데이터 수집, db update 완료": {
+      "main": [
+        [
+          {
+            "node": "formatting",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "formatting": {
+      "main": [
+        [
+          {
+            "node": "update gcs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "daily trigger": {
+      "main": [
+        []
+      ]
+    },
+    "trigger": {
+      "main": [
+        [
+          {
+            "node": "데이터 수집, db update 완료",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "d64eed11-01e8-4365-906e-3492260444fd",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "a795f5aa8d74cd20b042dd47c102907cb4003257cd21062673116262a5646b04"
+  },
+  "id": "UX63Ycvm8HBvhAAB",
+  "tags": [
+    {
+      "createdAt": "2025-06-18T01:42:38.271Z",
+      "updatedAt": "2025-06-18T01:42:38.271Z",
+      "id": "EFFxLiInYZNKlGZX",
+      "name": "collect data"
+    }
+  ]
+}

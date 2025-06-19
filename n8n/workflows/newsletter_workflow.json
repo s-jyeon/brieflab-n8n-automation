@@ -1,0 +1,232 @@
+{
+  "name": "Brieflab",
+  "nodes": [
+    {
+      "parameters": {
+        "sendTo": "={{ $('user_profile').item.json.email }}",
+        "subject": "={{ $('user_profile').item.json.user_name }}님 오늘 뉴스를 보내드립니다. ",
+        "message": "=안녕하세요 {{ $('user_profile').item.json.user_name }} 님 오늘의 틈나는 시간에 가볍게 훑어보시라고 오늘의 뉴스를 요약해드립니다. \n{{ $json.mail }}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        260,
+        -340
+      ],
+      "id": "549f75fe-c280-4eb3-9f5b-39432f177428",
+      "name": "Gmail",
+      "webhookId": "a45925ce-05bc-47c0-a517-8c86aa408e4b",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "Eu3hGs2krNgk3yZV",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "14QIuA7_iy4qbqWHfu5D0BiTpsGqmNwqDTckmEYCI1K0",
+          "mode": "list",
+          "cachedResultName": "user_form_response",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/14QIuA7_iy4qbqWHfu5D0BiTpsGqmNwqDTckmEYCI1K0/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1968950917,
+          "mode": "list",
+          "cachedResultName": "설문지 응답 시트1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/14QIuA7_iy4qbqWHfu5D0BiTpsGqmNwqDTckmEYCI1K0/edit#gid=1968950917"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        -540,
+        -20
+      ],
+      "id": "00ffd37f-6453-49ec-897e-bc8a284cbc36",
+      "name": "user_profile",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "ywz5wvLaflmXBFkk",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -300,
+        -20
+      ],
+      "id": "51d67bd0-c1a5-4b0d-9c8c-ca534eb73aed",
+      "name": "split by user"
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map(item => {\n  const input = item.json;\n\n  return {\n    json: {\n      user_id: input.user_id,\n      keywords: input.interests.split(',').map(s => s.trim()),\n      email: input.email\n\n      // 필요하면 아래 원본 정보도 포함 가능 (선택사항)\n      // row_number: input.row_number,\n      // timestamp: input.timestamp,\n      // slack_id: input.slack,\n    }\n  };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        60,
+        -20
+      ],
+      "id": "5bb47719-f90c-4690-98bc-d5eac398e12f",
+      "name": "formatting"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 9
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -760,
+        -20
+      ],
+      "id": "b74b53ad-0f0b-4bc7-b462-0faeefc19581",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://9c13-14-51-89-50.ngrok-free.app/generate-summary",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"user_id\": \"{{$json[\"user_id\"]}}\",\n  \"keywords\": [\"{{$json[\"keywords\"][\"0\"]}}\", \"{{$json[\"keywords\"][\"1\"]}}\"],\n  \"email\": \"{{$json[\"email\"]}}\"\n}\n\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        400,
+        -20
+      ],
+      "id": "1ceaf128-e713-48f0-91a8-dc231c81e70e",
+      "name": "langgraph_langchain"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -760,
+        -300
+      ],
+      "id": "38aa7e14-76be-4491-b7d5-9f177e46eab7",
+      "name": "When clicking ‘Execute workflow’"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "user_profile": {
+      "main": [
+        [
+          {
+            "node": "split by user",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "split by user": {
+      "main": [
+        [
+          {
+            "node": "Gmail",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "formatting",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "formatting": {
+      "main": [
+        [
+          {
+            "node": "langgraph_langchain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "user_profile",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "langgraph_langchain": {
+      "main": [
+        [
+          {
+            "node": "split by user",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "58433484-a674-4641-a4bf-bd21f17e709e",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "a795f5aa8d74cd20b042dd47c102907cb4003257cd21062673116262a5646b04"
+  },
+  "id": "RAZA1luE6cdIqMx3",
+  "tags": [
+    {
+      "createdAt": "2025-06-18T02:00:06.413Z",
+      "updatedAt": "2025-06-18T02:00:06.413Z",
+      "id": "iB0S9cRS2mggBcUz",
+      "name": "send emails"
+    }
+  ]
+}

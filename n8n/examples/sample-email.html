@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ $('user_profile').item.json.user_name }}님 오늘 뉴스를 보내드립니다.</title>
+</head>
+<body>
+    <h2>안녕하세요 {{ $('user_profile').item.json.user_name }} 님,</h2>
+    <p>오늘의 틈나는 시간에 가볍게 훑어보시라고 오늘의 뉴스를 요약해드립니다.</p>
+    <p>오늘의 뉴스 : {{ $json.mail }}</p>
+
+</body>
+</html>
+
+
+
