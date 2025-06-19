@@ -17,7 +17,7 @@
 │   ├── Dockerfile              # n8n용 커스텀 Dockerfile
 │   ├── diagram/                # 프로젝트 구조 및 워크플로우 다이어그램
 │   ├── examples/               # 이메일 HTML 샘플 등 예제
-│   └── workflows/              # n8n 워크플로우 JSON 파일
+│   └── workflows/              # n8n 워크플로우 JSON 파일, 데모 비디오
 </pre>
 
 
